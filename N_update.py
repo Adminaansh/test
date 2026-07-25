@@ -130,10 +130,7 @@ def login(driver, email, password):
     login_button.click()
     time.sleep(3)
 
-    if "login" in driver.current_url.lower() or "otp" in driver.current_url.lower():
-        print("Login may require additional input or OTP. Please complete login manually in the browser.")
-        input("Press Enter after you have successfully logged in...")
-
+     
 
 def upload_resume(driver, resume_path):
     driver.get(PROFILE_URL)
