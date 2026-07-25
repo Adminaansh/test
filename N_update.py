@@ -45,7 +45,7 @@ def parse_args():
 def get_credentials(args):
     email = args.email or os.environ.get("NAUKRI_EMAIL") or "aanshr.2000@gmail.com"
     password = args.password or os.environ.get("NAUKRI_PASSWORD") or "Aansh@123"
-    resume = args.resume or os.environ.get("NAUKRI_RESUME_PATH") or "C:/Users/DELL/Downloads/Resume.pdf"
+    resume = args.resume or os.environ.get("NAUKRI_RESUME_PATH") or "./Resume.pdf"
 
     if not email or not password or not resume:
         print("Error: email, password, and resume path are required.")
