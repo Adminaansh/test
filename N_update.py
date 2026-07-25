@@ -133,37 +133,40 @@ def login(driver, email, password):
      
 
 def upload_resume(driver, resume_path):
+    print("Navigating to profile page...")
     driver.get(PROFILE_URL)
-    time.sleep(3)
+    time.sleep(5)
 
-    try:
-        file_input = wait_for(
-            driver,
-            By.XPATH,
-            "//input[@type='file' and (contains(@id,'attachCV') or contains(@name,'resume') or contains(@name,'cv'))]",
-            timeout=15,
-        )
-    except TimeoutException:
-        raise RuntimeError("Could not find the resume upload field on the profile page.")
-
-    file_input.send_keys(resume_path)
+    # Scroll down to ensure dynamic content and elements load completely
+    driver.execute_script("window.scrollTo(0, 300);")
     time.sleep(2)
 
-    try:
-        upload_button = driver.find_element(
-            By.XPATH,
-            "//button[contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'upload') or contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'save')]")
-        
-    except NoSuchElementException:
-        print("Resume selected. If Naukri requires manual confirmation, please confirm in the browser.")
-        return
+    # Print the current page URL for debugging logs
+    print(f"Current page URL: {driver.current_url}")
 
     try:
-        upload_button.click()
-    except ElementClickInterceptedException:
-        driver.execute_script("arguments[0].click();", upload_button)
+        # Strategy 1: Look for any hidden or visible file upload inputs
+        print("Searching for file input field...")
+        file_input = WebDriverWait(driver, 15).until(
+            EC.presence_of_element_located((
+                By.XPATH, 
+                "//input[@type='file' and (contains(@id,'attachCV') or contains(@id,'resume') or contains(@name,'resume') or contains(@name,'cv') or contains(@class,'file'))]"
+            ))
+        )
+    except TimeoutException:
+        try:
+            # Strategy 2: Broadest possible search for any file input if Strategy 1 fails
+            print("Targeted input not found. Trying fallback for any file input...")
+            file_input = driver.find_element(By.XPATH, "//input[@type='file']")
+        except NoSuchElementException:
+            # Save a screenshot to the repository workspace to let you see what went wrong
+            driver.save_screenshot("error_profile_page.png")
+            raise RuntimeError("Could not find any resume upload field on the profile page. Saved 'error_profile_page.png' for review.")
 
+    print("Uploading file...")
+    file_input.send_keys(resume_path)
     time.sleep(5)
+    print("Resume uploaded successfully!")
 
 
 def main():
