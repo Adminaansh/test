@@ -2,8 +2,11 @@ name: Scheduled Python Script
 
 on:
   schedule:
-    # Runs at 00:00 UTC every day. Customize using CRON syntax.
-    - cron: '0 0 * * *'
+    # Runs at 03:30 UTC (9:00 AM IST) Monday through Saturday
+    - cron: '30 3 * * 1-6'
+    
+    # Runs at 09:30 UTC (3:00 PM IST) Monday through Saturday
+    - cron: '30 9 * * 1-6'
   workflow_dispatch: # Allows you to manually trigger the script from the Actions tab
 
 jobs:
