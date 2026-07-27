@@ -141,33 +141,32 @@ def upload_resume(driver, resume_path):
     driver.execute_script("window.scrollTo(0, 300);")
     time.sleep(2)
 
-    # Print the current page URL for debugging logs
     print(f"Current page URL: {driver.current_url}")
 
     try:
-        # Strategy 1: Look for any hidden or visible file upload inputs
         print("Searching for file input field...")
         file_input = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((
                 By.XPATH, 
-                "//input[@type='file' and (contains(@id,'attachCV') or contains(@id,'resume') or contains(@name,'resume') or contains(@name,'cv') or contains(@class,'file'))]"
+                "//input[@type='file']"
             ))
         )
     except TimeoutException:
-        try:
-            # Strategy 2: Broadest possible search for any file input if Strategy 1 fails
-            print("Targeted input not found. Trying fallback for any file input...")
-            file_input = driver.find_element(By.XPATH, "//input[@type='file']")
-        except NoSuchElementException:
-            # Save a screenshot to the repository workspace to let you see what went wrong
-            driver.save_screenshot("error_profile_page.png")
-            raise RuntimeError("Could not find any resume upload field on the profile page. Saved 'error_profile_page.png' for review.")
+        driver.save_screenshot("error_profile_page.png")
+        raise RuntimeError("Could not find any resume upload field on the profile page. Saved 'error_profile_page.png' for review.")
 
-    print("Uploading file...")
+    print("Uploading file via JavaScript...")
+    # Make the file input element temporarily visible and interactable via JS if hidden
+    driver.execute_script("""
+        arguments[0].style.display = 'block';
+        arguments[0].style.visibility = 'visible';
+        arguments[0].style.opacity = '1';
+    """, file_input)
+    
+    # Send keys to the input element
     file_input.send_keys(resume_path)
     time.sleep(5)
     print("Resume uploaded successfully!")
-
 
 def main():
     args = parse_args()
