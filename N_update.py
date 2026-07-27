@@ -98,35 +98,55 @@ def wait_for(driver, by, selector, timeout=20):
     )
 
 
+def wait_for_clickable(driver, by, selector, timeout=20):
+    """Wait for element to be clickable (visible and enabled)"""
+    return WebDriverWait(driver, timeout).until(
+        EC.element_to_be_clickable((by, selector))
+    )
+
+
 def login(driver, email, password):
     driver.get(LOGIN_URL)
+    time.sleep(2)
+    
     try:
-        email_input = wait_for(driver, By.ID, "usernameField")
+        email_input = wait_for_clickable(driver, By.ID, "usernameField", timeout=15)
     except TimeoutException:
         try:
-            email_input = wait_for(driver, By.NAME, "email")
+            email_input = wait_for_clickable(driver, By.NAME, "email", timeout=15)
         except TimeoutException:
             raise RuntimeError("Could not find the Naukri email field.")
 
     email_input.clear()
     email_input.send_keys(email)
+    time.sleep(1)
 
     try:
-        password_input = driver.find_element(By.ID, "passwordField")
-    except NoSuchElementException:
+        password_input = wait_for_clickable(driver, By.ID, "passwordField", timeout=15)
+    except TimeoutException:
         try:
-            password_input = driver.find_element(By.NAME, "password")
-        except NoSuchElementException:
+            password_input = wait_for_clickable(driver, By.NAME, "password", timeout=15)
+        except TimeoutException:
             raise RuntimeError("Could not find the Naukri password field.")
 
     password_input.clear()
     password_input.send_keys(password)
+    time.sleep(1)
 
     try:
-        login_button = driver.find_element(By.XPATH, "//button[@type='submit' or contains(text(),'Login') or contains(text(),'Login Now')]")
-    except NoSuchElementException:
+        login_button = wait_for_clickable(
+            driver, 
+            By.XPATH, 
+            "//button[@type='submit' or contains(text(),'Login') or contains(text(),'Login Now')]",
+            timeout=15
+        )
+    except TimeoutException:
         raise RuntimeError("Could not find the Naukri login button.")
 
+    # Scroll to ensure button is visible
+    driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
+    time.sleep(1)
+    
     login_button.click()
     
     # Wait until the browser successfully redirects away from the login page
@@ -135,7 +155,7 @@ def login(driver, email, password):
         lambda d: "nlogin" not in d.current_url
     )
     time.sleep(3)
-     
+      
 
 def upload_resume(driver, resume_path):
     print("Navigating to profile page...")
@@ -154,7 +174,10 @@ def upload_resume(driver, resume_path):
             ))
         )
     except TimeoutException:
-        driver.save_screenshot("error_profile_page.png")
+        try:
+            driver.save_screenshot("error_profile_page.png")
+        except:
+            pass
         raise RuntimeError("Could not find any resume upload field on the profile page.")
 
     print("Making file input visible and uploading file...")
@@ -162,11 +185,20 @@ def upload_resume(driver, resume_path):
         arguments[0].style.display = 'block';
         arguments[0].style.visibility = 'visible';
         arguments[0].style.opacity = '1';
+        arguments[0].setAttribute('class', '');
     """, file_input)
     
-    file_input.send_keys(resume_path)
+    time.sleep(1)
+    
+    # Scroll to ensure element is in view
+    driver.execute_script("arguments[0].scrollIntoView(true);", file_input)
+    time.sleep(1)
+    
+    file_input.send_keys(os.path.abspath(resume_path))
     time.sleep(5)
     print("Resume uploaded successfully!")
+
+
 def main():
     args = parse_args()
     email, password, resume_path = get_credentials(args)
