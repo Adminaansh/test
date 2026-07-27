@@ -128,8 +128,13 @@ def login(driver, email, password):
         raise RuntimeError("Could not find the Naukri login button.")
 
     login_button.click()
+    
+    # Wait until the browser successfully redirects away from the login page
+    print("Waiting for login authentication to complete...")
+    WebDriverWait(driver, 30).until(
+        lambda d: "nlogin" not in d.current_url
+    )
     time.sleep(3)
-
      
 
 def upload_resume(driver, resume_path):
