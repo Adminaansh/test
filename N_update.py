@@ -137,7 +137,7 @@ def login(driver, email, password):
     time.sleep(3)
      
 
- def upload_resume(driver, resume_path):
+def upload_resume(driver, resume_path):
     print("Navigating to profile page...")
     driver.get(PROFILE_URL)
     time.sleep(5)
