@@ -108,29 +108,36 @@ def wait_for_clickable(driver, by, selector, timeout=20):
 def login(driver, email, password):
     driver.get(LOGIN_URL)
     time.sleep(2)
+    print(f"Current URL after login page load: {driver.current_url}")
     
     try:
         email_input = wait_for_clickable(driver, By.ID, "usernameField", timeout=15)
+        print("Found email field by ID")
     except TimeoutException:
         try:
             email_input = wait_for_clickable(driver, By.NAME, "email", timeout=15)
+            print("Found email field by NAME")
         except TimeoutException:
             raise RuntimeError("Could not find the Naukri email field.")
 
     email_input.clear()
     email_input.send_keys(email)
+    print(f"Entered email: {email}")
     time.sleep(1)
 
     try:
         password_input = wait_for_clickable(driver, By.ID, "passwordField", timeout=15)
+        print("Found password field by ID")
     except TimeoutException:
         try:
             password_input = wait_for_clickable(driver, By.NAME, "password", timeout=15)
+            print("Found password field by NAME")
         except TimeoutException:
             raise RuntimeError("Could not find the Naukri password field.")
 
     password_input.clear()
     password_input.send_keys(password)
+    print("Entered password")
     time.sleep(1)
 
     try:
@@ -140,6 +147,7 @@ def login(driver, email, password):
             "//button[@type='submit' or contains(text(),'Login') or contains(text(),'Login Now')]",
             timeout=15
         )
+        print("Found login button")
     except TimeoutException:
         raise RuntimeError("Could not find the Naukri login button.")
 
@@ -147,13 +155,21 @@ def login(driver, email, password):
     driver.execute_script("arguments[0].scrollIntoView(true);", login_button)
     time.sleep(1)
     
+    print("Clicking login button...")
     login_button.click()
     
     # Wait until the browser successfully redirects away from the login page
     print("Waiting for login authentication to complete...")
-    WebDriverWait(driver, 30).until(
-        lambda d: "nlogin" not in d.current_url
-    )
+    try:
+        WebDriverWait(driver, 30).until(
+            lambda d: "nlogin" not in d.current_url
+        )
+        print(f"Login successful! Current URL: {driver.current_url}")
+    except TimeoutException:
+        current_url = driver.current_url
+        print(f"Login timeout. Current URL: {current_url}")
+        raise RuntimeError(f"Login timeout or failed. Still on URL: {current_url}")
+    
     time.sleep(3)
       
 
@@ -173,9 +189,11 @@ def upload_resume(driver, resume_path):
                 "//input[@type='file']"
             ))
         )
+        print("Found file input field")
     except TimeoutException:
         try:
             driver.save_screenshot("error_profile_page.png")
+            print("Screenshot saved to error_profile_page.png")
         except:
             pass
         raise RuntimeError("Could not find any resume upload field on the profile page.")
@@ -194,7 +212,9 @@ def upload_resume(driver, resume_path):
     driver.execute_script("arguments[0].scrollIntoView(true);", file_input)
     time.sleep(1)
     
-    file_input.send_keys(os.path.abspath(resume_path))
+    abs_resume_path = os.path.abspath(resume_path)
+    print(f"Uploading resume from: {abs_resume_path}")
+    file_input.send_keys(abs_resume_path)
     time.sleep(5)
     print("Resume uploaded successfully!")
 
@@ -211,6 +231,8 @@ def main():
         print("Resume update process finished. Verify on Naukri manually if needed.")
     except Exception as exc:
         print(f"Error: {exc}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
     finally:
         driver.quit()
